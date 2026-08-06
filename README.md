@@ -56,3 +56,15 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+1. Manifest dicetak → diserahkan ke kurir
+2. Kurir tanda tangan di kertas
+3. Kurir memberi resi untuk tiap paket
+4. Admin input resi satu per satu di /admin/pesanan/{id}
+5. Klik "Tandai Semua Dikirim" di manifest → status update ke 'dikirim'
+
+
+— Di layar   → tampilkan resi "JNE123456" jika sudah diinput, 
+               atau "— Belum ada resi —" jika belum
+— Saat print → tetap kotak kosong untuk TTD fisik kurir
