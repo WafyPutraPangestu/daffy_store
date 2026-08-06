@@ -7,9 +7,12 @@ use App\Models\CustomerProfile;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Setting;
+use App\Models\User;
+use App\Notifications\NewOrderNotification;
 use App\Services\RajaOngkirService;
 use App\Traits\Notifies;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -334,6 +337,11 @@ class Checkout extends Component
 
         $this->cartData->delete();
         $this->dispatch('cartUpdated');
+
+        // Kirim notifikasi in-app ke semua admin
+        $admins = User::where('role', 'admin')->get();
+        Notification::send($admins, new NewOrderNotification($order));
+
         $this->notifySuccess('Manifes transaksi berhasil diterbitkan. Menunggu pelunasan.', 'ORDER CREATED');
 
         return $this->redirect(route('pelanggan.transaction.show', $order->id), navigate: true);

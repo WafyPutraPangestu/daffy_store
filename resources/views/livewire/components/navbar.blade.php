@@ -353,6 +353,92 @@
                 </div>
             @endcan
 
+            {{-- Bell Notifikasi — hanya admin --}}
+            @can('admin')
+                <div class="nav-item-wrap" x-data="{ bellOpen: false }" @click.outside="bellOpen = false"
+                    style="position: relative;">
+
+                    <button type="button" @click="bellOpen = !bellOpen"
+                        style="background: transparent; border: none; cursor: pointer; padding: 0; outline: none; display: flex; align-items: center; position: relative;"
+                        title="Notifikasi">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor"
+                                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        @if ($unreadCount > 0)
+                            <span
+                                style="position: absolute; top: -6px; right: -6px; background: #e5484d; color: white; border-radius: 50%; font-size: 9px; font-weight: 700; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; line-height: 1;">
+                                {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+                            </span>
+                        @endif
+                    </button>
+
+                    {{-- Dropdown Notifikasi --}}
+                    <div x-show="bellOpen" x-transition style="display: none; position: absolute; right: 0; top: calc(100% + 16px); width: 340px; background: var(--color-paper); border: 1px solid var(--color-line); z-index: 9999; box-shadow: 0 4px 24px rgba(0,0,0,0.12);">
+
+                        {{-- Header --}}
+                        <div style="padding: 12px 16px; border-bottom: 1px solid var(--color-line); display: flex; justify-content: space-between; align-items: center; background: var(--color-line-2);">
+                            <span style="font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--color-ink-3); text-transform: uppercase;">
+                                NOTIFIKASI
+                                @if ($unreadCount > 0)
+                                    <span style="background: #e5484d; color: white; border-radius: 4px; padding: 1px 5px; font-size: 9px; margin-left: 4px;">
+                                        {{ $unreadCount }} BARU
+                                    </span>
+                                @endif
+                            </span>
+                            @if ($unreadCount > 0)
+                                <button type="button" wire:click="markAllRead"
+                                    style="background: none; border: none; font-size: 10px; cursor: pointer; color: var(--color-accent); letter-spacing: 1px; font-weight: 600;">
+                                    TANDAI SEMUA DIBACA
+                                </button>
+                            @endif
+                        </div>
+
+                        {{-- List Notifikasi --}}
+                        <div style="max-height: 320px; overflow-y: auto;">
+                            @forelse ($recentNotifications as $notif)
+                                <div wire:key="notif-{{ $notif->id }}"
+                                    style="padding: 14px 16px; border-bottom: 1px solid var(--color-line-2); display: flex; gap: 12px; align-items: flex-start; {{ $notif->read_at ? 'opacity: 0.6;' : 'background: rgba(58,143,255,0.04);' }}">
+
+                                    {{-- Dot indikator unread --}}
+                                    <div style="margin-top: 4px; flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: {{ $notif->read_at ? 'var(--color-line)' : '#3a8fff' }};"></div>
+
+                                    <div style="flex: 1; overflow: hidden;">
+                                        <div style="font-size: 12px; font-weight: 600; color: var(--color-ink); margin-bottom: 2px;">
+                                            Order Baru — {{ $notif->data['order_number'] }}
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--color-ink-3);">
+                                            {{ $notif->data['customer_name'] }} ·
+                                            Rp {{ number_format($notif->data['total_amount'], 0, ',', '.') }}
+                                        </div>
+                                        <div style="font-size: 10px; color: var(--color-ink-3); margin-top: 4px;">
+                                            {{ $notif->created_at->diffForHumans() }}
+                                        </div>
+                                    </div>
+
+                                    {{-- Tombol lihat & mark read --}}
+                                    <div style="display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;">
+                                        <a href="{{ $notif->data['order_url'] }}" wire:navigate
+                                            @click="bellOpen = false"
+                                            wire:click="markAsRead('{{ $notif->id }}')"
+                                            style="font-size: 10px; color: var(--color-accent); text-decoration: none; font-weight: 600; letter-spacing: 1px; white-space: nowrap;">
+                                            LIHAT →
+                                        </a>
+                                    </div>
+                                </div>
+                            @empty
+                                <div style="padding: 32px 16px; text-align: center; color: var(--color-ink-3); font-size: 11px; letter-spacing: 1px;">
+                                    BELUM ADA NOTIFIKASI
+                                </div>
+                            @endforelse
+                        </div>
+
+                    </div>
+                </div>
+            @endcan
+
             @guest
                 <a href="{{ route('login') }}" wire:navigate class="btn-outline"
                     style="padding:8px 20px;font-size:10px">

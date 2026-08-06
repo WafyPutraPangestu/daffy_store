@@ -27,6 +27,44 @@ class Navbar extends Component
         return null;
     }
 
+    // Jumlah notifikasi yang belum dibaca (hanya untuk admin)
+    #[Computed]
+    public function unreadCount(): int
+    {
+        if (Auth::check() && Auth::user()->role === 'admin') {
+            return Auth::user()->unreadNotifications()->count();
+        }
+        return 0;
+    }
+
+    // 5 notifikasi terbaru untuk ditampilkan di dropdown
+    #[Computed]
+    public function recentNotifications()
+    {
+        if (Auth::check() && Auth::user()->role === 'admin') {
+            return Auth::user()->notifications()->latest()->take(5)->get();
+        }
+        return collect();
+    }
+
+    // Tandai satu notifikasi sebagai sudah dibaca
+    public function markAsRead(string $notificationId): void
+    {
+        $notification = Auth::user()->notifications()->find($notificationId);
+        if ($notification) {
+            $notification->markAsRead();
+            unset($this->unreadCount);
+            unset($this->recentNotifications);
+        }
+    }
+
+    // Tandai semua notifikasi sebagai sudah dibaca
+    public function markAllRead(): void
+    {
+        Auth::user()->unreadNotifications->markAsRead();
+        unset($this->unreadCount);
+        unset($this->recentNotifications);
+    }
     #[On('cartUpdated')]
     public function updateCartCount()
     {
@@ -53,6 +91,9 @@ class Navbar extends Component
 
     public function render()
     {
-        return view('livewire.components.navbar');
+        return view('livewire.components.navbar', [
+            'unreadCount'         => $this->unreadCount,
+            'recentNotifications' => $this->recentNotifications,
+        ]);
     }
 }
