@@ -116,13 +116,13 @@
                 <div
                     style="padding: 16px 24px; border-top: 1px solid var(--color-line); display: flex; justify-content: flex-end; gap: 12px; background: var(--color-line-2);">
 
-                    <a href="{{ route('pelanggan.transaction.show', $order->id) }}" wire:navigate class="btn-outline"
+                    <a href="{{ route('pelanggan.transaction.show', $order->id) }}" class="btn-outline"
                         style="text-decoration: none; padding: 8px 16px;">
                         LIHAT DETAIL
                     </a>
 
                     @if ($order->status === 'menunggu_pembayaran')
-                        <a href="{{ route('pelanggan.transaction.show', $order->id) }}" wire:navigate
+                        <a href="{{ route('pelanggan.transaction.show', $order->id) }}"
                             class="btn-primary"
                             style="text-decoration: none; padding: 8px 16px; background: #ffb224; color: #000; border-color: #ffb224;">
                             BAYAR SEKARANG

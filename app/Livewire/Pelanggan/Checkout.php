@@ -344,7 +344,7 @@ class Checkout extends Component
 
         $this->notifySuccess('Manifes transaksi berhasil diterbitkan. Menunggu pelunasan.', 'ORDER CREATED');
 
-        return $this->redirect(route('pelanggan.transaction.show', $order->id), navigate: true);
+        return $this->redirect(route('pelanggan.transaction.show', $order->id));
     }
 
     public function render()
