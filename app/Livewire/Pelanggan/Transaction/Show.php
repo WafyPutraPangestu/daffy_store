@@ -69,7 +69,7 @@ class Show extends Component
     }
 
     // --- KONSEPNYA POLLING / MANUAL CHECK STATUS ---
-    public function checkPaymentStatus($silent = false)
+    public function checkPaymentStatus($silent = true)
     {
         // Konfigurasi Kunci Midtrans
         Config::$serverKey = config('services.midtrans.server_key');

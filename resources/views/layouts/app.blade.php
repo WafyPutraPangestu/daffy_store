@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @livewireStyles
     <style>[x-cloak] { display: none !important; }</style>
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}" data-navigate-track="true"></script>
 </head>
 
 <body>
@@ -19,15 +20,6 @@
         {{ $slot }}
     </main>
     @livewireScripts
-    <script>
-        // Reinisialisasi Alpine.js setelah setiap navigasi wire:navigate
-        // Ini mencegah error "Illegal invocation" pada x-data scope yang hilang
-        document.addEventListener('livewire:navigated', () => {
-            if (window.Alpine) {
-                window.Alpine.initTree(document.body);
-            }
-        });
-    </script>
 </body>
 
 </html>

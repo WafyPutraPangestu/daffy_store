@@ -256,7 +256,7 @@
             {{-- Live Cart Counter — hanya pelanggan --}}
             @can('pelanggan')
                 <div class="nav-item-wrap" x-data="{ cartOpen: false }" @click.outside="cartOpen = false"
-                    style="position: relative;">
+                    style="position: relative;" wire:key="nav-cart-dropdown">
 
                     <button type="button" @click="cartOpen = !cartOpen" class="cart-icon-wrap"
                         title="Keranjang Belanja"
@@ -356,7 +356,7 @@
             {{-- Bell Notifikasi — hanya admin --}}
             @can('admin')
                 <div class="nav-item-wrap" x-data="{ bellOpen: false }" @click.outside="bellOpen = false"
-                    style="position: relative;">
+                    style="position: relative;" wire:key="nav-bell-dropdown">
 
                     <button type="button" @click="bellOpen = !bellOpen"
                         style="background: transparent; border: none; cursor: pointer; padding: 0; outline: none; display: flex; align-items: center; position: relative;"

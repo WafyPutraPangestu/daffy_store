@@ -1,4 +1,21 @@
-<div style="padding: 24px; max-width: 1000px; margin: 0 auto;">
+<div style="padding: 24px; max-width: 1000px; margin: 0 auto;" x-data="{}"
+    @open-snap.window="
+        let snapToken = $event.detail.token;
+        if (!snapToken) return;
+        window.snap.pay(snapToken, {
+            onSuccess: function(result) {
+                alert('Pembayaran berhasil diselesaikan!');
+                window.location.reload();
+            },
+            onPending: function(result) {
+                alert('Menunggu penyelesaian pembayaran Anda!');
+                window.location.reload();
+            },
+            onError: function(result) {
+                alert('Pembayaran gagal atau dibatalkan.');
+            }
+        });
+    ">
 
     <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
         <a href="{{ route('pelanggan.transaction.index') }}" wire:navigate class="btn-outline"
@@ -135,7 +152,7 @@
                 </h2>
 
                 @if ($order->status === 'menunggu_pembayaran')
-                    <div wire:poll.10s="checkPaymentStatus(true)"></div>
+                    <div wire:poll.10s="checkPaymentStatus"></div>
 
                     <p style="font-size: 12px; color: var(--color-ink-2); line-height: 1.5; margin-bottom: 24px;">
                         Silakan selesaikan pembayaran Anda agar pesanan ini dapat segera kami proses dan kirim.
@@ -147,7 +164,7 @@
                             LANJUTKAN PEMBAYARAN
                         </button>
 
-                        <button wire:click="checkPaymentStatus" wire:loading.attr="disabled" class="btn-outline"
+                        <button wire:click="checkPaymentStatus(false)" wire:loading.attr="disabled" class="btn-outline"
                             style="width: 100%; font-size: 11px; padding: 10px; cursor: pointer; text-align: center; border: 1px solid var(--color-line);">
                             <span wire:loading.remove wire:target="checkPaymentStatus">CEK STATUS PEMBAYARAN</span>
                             <span wire:loading wire:target="checkPaymentStatus">MENYINKRONKAN...</span>
@@ -175,38 +192,3 @@
         </div>
     </div>
 </div>
-@once
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js"
-        data-client-key="{{ config('services.midtrans.client_key') }}"></script>
-
-    <script>
-        document.addEventListener('livewire:initialized', () => {
-            Livewire.on('open-snap', (event) => {
-                // Handle kedua kemungkinan struktur payload Livewire 3
-                let snapToken = event?.token ?? event?.[0]?.token;
-
-                if (!snapToken) {
-                    console.error('Snap token tidak ditemukan di event:', event);
-                    return;
-                }
-
-                window.snap.pay(snapToken, {
-                    onSuccess: function(result) {
-                        alert("Pembayaran berhasil diselesaikan!");
-                        window.location.reload();
-                    },
-                    onPending: function(result) {
-                        alert("Menunggu penyelesaian pembayaran Anda!");
-                        window.location.reload();
-                    },
-                    onError: function(result) {
-                        alert("Pembayaran gagal atau dibatalkan.");
-                    },
-                    onClose: function() {
-                        console.log('Pelanggan menutup popup tanpa membayar.');
-                    }
-                });
-            });
-        });
-    </script>
-@endonce
