@@ -24,7 +24,8 @@ class RajaOngkirService
         );
       }
 
-      return $response->json()['data'] ?? [];
+      $json = $response->json();
+      return is_array($json) && isset($json['data']) ? $json['data'] : [];
     });
   }
 
@@ -41,7 +42,8 @@ class RajaOngkirService
         );
       }
 
-      return $response->json()['data'] ?? [];
+      $json = $response->json();
+      return is_array($json) && isset($json['data']) ? $json['data'] : [];
     });
   }
 
@@ -58,7 +60,8 @@ class RajaOngkirService
         );
       }
 
-      return $response->json()['data'] ?? [];
+      $json = $response->json();
+      return is_array($json) && isset($json['data']) ? $json['data'] : [];
     });
   }
 
@@ -88,7 +91,8 @@ class RajaOngkirService
         );
       }
 
-      return $response->json()['data'] ?? [];
+      $json = $response->json();
+      return is_array($json) && isset($json['data']) ? $json['data'] : [];
     });
   }
 }
