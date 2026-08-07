@@ -245,9 +245,16 @@ class Checkout extends Component
                 $this->courier
             );
 
-            $this->courierServices = $costs;
+            $this->courierServices = collect($costs)->map(function ($service) {
+                return [
+                    'service'     => $service['service'],
+                    'description' => $service['description'] ?? '',
+                    'cost'        => $service['cost'][0]['value'] ?? 0,
+                    'etd'         => $service['cost'][0]['etd'] ?? '',
+                ];
+            })->toArray();
 
-            if (count($costs) === 0) {
+            if (count($this->courierServices) === 0) {
                 $this->notifyWarning('Layanan kurir tidak tersedia untuk rute tujuan ini.', 'LOGISTIK KOSONG');
             }
         } catch (\Exception $e) {
