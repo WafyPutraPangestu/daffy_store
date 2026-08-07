@@ -39,40 +39,90 @@ class Show extends Component
             return;
         }
 
-        // --- MOCK MIDTRANS UNTUK DEMO ---
-        Payment::updateOrCreate(
-            ['order_id' => $this->order->id],
-            [
-                'gateway_transaction_id' => 'DUMMY-' . uniqid(),
-                'payment_method'         => 'demo_payment',
-                'amount'                 => $this->order->total_amount,
-                'status'                 => 'paid',
-                'gateway_response'       => json_encode(['status' => 'mocked']),
-                'paid_at'                => now(),
-            ]
-        );
+        if (!$this->order->snap_token) {
+            Config::$serverKey = config('services.midtrans.server_key');
+            Config::$isProduction = config('services.midtrans.is_production');
+            Config::$isSanitized = true;
+            Config::$is3ds = true;
 
-        $this->order->update([
-            'status' => 'diproses',
-            'snap_token' => 'DUMMY_TOKEN'
-        ]);
+            $params = [
+                'transaction_details' => [
+                    'order_id'     => $this->order->order_number,
+                    'gross_amount' => (int) $this->order->total_amount,
+                ],
+                'customer_details' => [
+                    'first_name' => $this->order->recipient_name,
+                    'email'      => Auth::user()->email,
+                ],
+            ];
 
-        $this->order->refresh();
-        $this->notifySuccess('Pembayaran berhasil disimulasikan (Mode Demo).', 'SUKSES');
+            try {
+                $snapToken = Snap::getSnapToken($params);
+                $this->order->update(['snap_token' => $snapToken]);
+            } catch (\Exception $e) {
+                $this->notifyError('Gagal terhubung ke Midtrans: ' . $e->getMessage(), 'PAYMENT ERROR');
+                return;
+            }
+        }
+
+        $this->dispatch('open-snap', token: $this->order->snap_token);
     }
 
     // --- KONSEPNYA POLLING / MANUAL CHECK STATUS ---
     public function checkPaymentStatus($silent = true)
     {
-        // --- MOCK MIDTRANS UNTUK DEMO ---
-        if ($this->order->status === 'menunggu_pembayaran') {
-             if (!$silent) {
-                 $this->notifyWarning('Pembayaran belum dilakukan. Silakan klik LANJUTKAN PEMBAYARAN.', 'BELUM DIBAYAR');
-             }
-        } else {
-             if (!$silent) {
-                 $this->notifySuccess('Pembayaran sudah lunas (Mode Demo).', 'SUKSES');
-             }
+        // Konfigurasi Kunci Midtrans
+        Config::$serverKey = config('services.midtrans.server_key');
+        Config::$isProduction = config('services.midtrans.is_production');
+
+        try {
+            // FIX INTELEPHENSE: Tambahkan (object) agar VS Code tahu ini bukan Array
+            $status = (object) Transaction::status($this->order->order_number);
+
+            $transactionStatus = $status->transaction_status ?? null;
+
+            $paymentStatus = 'pending';
+            $orderStatus = 'menunggu_pembayaran';
+
+            // Pemetaan status Midtrans ke Database lokal kita
+            if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
+                $paymentStatus = 'paid';
+                $orderStatus = 'diproses';
+            } elseif ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
+                $paymentStatus = $transactionStatus == 'expire' ? 'expired' : 'failed';
+                $orderStatus = 'dibatalkan';
+            }
+
+            // 1. Simpan/Update data ke tabel PAYMENTS
+            Payment::updateOrCreate(
+                ['order_id' => $this->order->id],
+                [
+                    'gateway_transaction_id' => $status->transaction_id ?? null,
+                    'payment_method'         => $status->payment_type ?? null,
+                    'amount'                 => $status->gross_amount ?? $this->order->total_amount,
+                    'status'                 => $paymentStatus,
+                    'gateway_response'       => json_encode($status),
+                    'paid_at'                => $paymentStatus === 'paid' ? now() : null,
+                ]
+            );
+
+            // 2. Update status utama di tabel ORDERS
+            $this->order->update(['status' => $orderStatus]);
+
+            // Refresh data order agar tampilan di blade langsung berubah secara reaktif
+            $this->order->refresh();
+
+            if (!$silent) {
+                if ($paymentStatus === 'paid') {
+                    $this->notifySuccess('Pembayaran terverifikasi! Pesanan Anda segera diproses.', 'SUKSES');
+                } else {
+                    $this->notifyInfo('Status pembayaran saat ini: ' . strtoupper($transactionStatus), 'SINKRONISASI');
+                }
+            }
+        } catch (\Exception $e) {
+            if (!$silent) {
+                $this->notifyWarning('Belum ada rekaman pembayaran untuk invoice ini di Midtrans.', 'BELUM DIBAYAR');
+            }
         }
     }
 
